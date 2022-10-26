@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.PowerFx.Core.IR;
 using Microsoft.PowerFx.Interpreter;
@@ -536,17 +537,21 @@ namespace Microsoft.PowerFx.Functions
             where TPFxPrimitive : PrimitiveValue<TDotNetPrimitive>
             where TDotNetPrimitive : IComparable<TDotNetPrimitive>
         {
-            var values = new Dictionary<TDotNetPrimitive, DValue<RecordValue>>();
+            var values = new Dictionary<TDotNetPrimitive, FormulaValue>();
             foreach (var (row, sortValue) in pairs)
             {
                 var key = (TDotNetPrimitive)sortValue.ToObject();
+                
                 if (!values.ContainsKey(key))
                 {
-                    values[key] = row;
+                    values.Add(key, RecordValue.NewRecordFromFields(new NamedValue(new KeyValuePair<string, FormulaValue>("Result", sortValue))));
                 }
             }
 
-            return new InMemoryTableValue(irContext, values.Values);
+            PrimitiveValueConversions.TryGetFormulaType(typeof(TDotNetPrimitive), out var fType);
+            var test = RecordType.Empty().Add("Result", fType);
+
+            return FormulaValue.NewTable(test, values.Values.Cast<RecordValue>());
         }
 
         private static FormulaValue SortValueType<TPFxPrimitive, TDotNetPrimitive>(List<(DValue<RecordValue> row, FormulaValue sortValue)> pairs, IRContext irContext, int compareToResultModifier)

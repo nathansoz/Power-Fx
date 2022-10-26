@@ -1,0 +1,2 @@
+>> CountRows(Distinct([{a: 1}, {a: 1}, {a: 3}], Value.b))
+3
