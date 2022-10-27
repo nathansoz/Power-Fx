@@ -17,6 +17,7 @@ using Microsoft.PowerFx.Core.Logging.Trackers;
 using Microsoft.PowerFx.Core.Types;
 using Microsoft.PowerFx.Core.Utils;
 using Microsoft.PowerFx.Syntax;
+using Microsoft.PowerFx.Types;
 
 namespace Microsoft.PowerFx.Core.Texl.Builtins
 {
@@ -38,7 +39,7 @@ namespace Microsoft.PowerFx.Core.Texl.Builtins
             yield return new[] { TexlStrings.DistinctArg1, TexlStrings.DistinctArg2 };
         }
 
-        public override bool CheckInvocation(TexlBinding binding, TexlNode[] args, DType[] argTypes, IErrorContainer errors, out DType returnType, out Dictionary<TexlNode, DType> nodeToCoercedTypeMap)
+        protected override bool CheckInvocation(CheckTypesContext context, TexlNode[] args, DType[] argTypes, IErrorContainer errors, out DType returnType, out Dictionary<TexlNode, DType> nodeToCoercedTypeMap)
         {
             Contracts.AssertValue(args);
             Contracts.AssertAllValues(args);
@@ -50,7 +51,9 @@ namespace Microsoft.PowerFx.Core.Texl.Builtins
             var fValid = CheckInvocation(args, argTypes, errors, out returnType, out nodeToCoercedTypeMap);
             Contracts.Assert(returnType.IsTable);
 
-            returnType = argTypes[0];
+            var lambdaType = argTypes[1];
+
+            returnType = DType.CreateTable(new TypedName(new DType(lambdaType.Kind), GetOneColumnTableResultName(context.Features)));
 
             var exprType = argTypes[1];
             if (!exprType.IsPrimitive || exprType.IsOptionSet)

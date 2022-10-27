@@ -537,21 +537,21 @@ namespace Microsoft.PowerFx.Functions
             where TPFxPrimitive : PrimitiveValue<TDotNetPrimitive>
             where TDotNetPrimitive : IComparable<TDotNetPrimitive>
         {
-            var values = new Dictionary<TDotNetPrimitive, FormulaValue>();
+            var values = new Dictionary<TDotNetPrimitive, DValue<RecordValue>>();
+            var name = ((TableType)irContext.ResultType).SingleColumnFieldName;
+
             foreach (var (row, sortValue) in pairs)
             {
                 var key = (TDotNetPrimitive)sortValue.ToObject();
-                
+  
                 if (!values.ContainsKey(key))
                 {
-                    values.Add(key, RecordValue.NewRecordFromFields(new NamedValue(new KeyValuePair<string, FormulaValue>("Result", sortValue))));
+                    var insert = FormulaValue.NewRecordFromFields(new NamedValue(name, sortValue));
+                    values.Add(key, DValue<RecordValue>.Of(insert));
                 }
             }
 
-            PrimitiveValueConversions.TryGetFormulaType(typeof(TDotNetPrimitive), out var fType);
-            var test = RecordType.Empty().Add("Result", fType);
-
-            return FormulaValue.NewTable(test, values.Values.Cast<RecordValue>());
+            return new InMemoryTableValue(irContext, values.Values);
         }
 
         private static FormulaValue SortValueType<TPFxPrimitive, TDotNetPrimitive>(List<(DValue<RecordValue> row, FormulaValue sortValue)> pairs, IRContext irContext, int compareToResultModifier)
