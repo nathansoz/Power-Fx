@@ -1,2 +1,5 @@
->> CountRows(Distinct([{a: 1}, {a: 1}, {a: 3}], Value.b))
-3
+>> CountRows(Distinct([{a: 1}, {a: 1}, {a: 3}], Value.a))
+2
+
+>> Distinct([{a: 1}, {a: 1}, {a: 3}], Value.a)
+Table({Result:1},{Result:3})
