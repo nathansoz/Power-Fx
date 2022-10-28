@@ -386,7 +386,7 @@ namespace Microsoft.PowerFx.Functions
             }
 
             var childContext = context.SymbolContext.WithScopeValues(row.Value);
-            var distinctValue = await lambda.EvalAsync(runner, context.NewScope(childContext));
+            var distinctValue = await lambda.EvalInRowScopeAsync(context.NewScope(childContext));
 
             return (row, distinctValue);
         }
