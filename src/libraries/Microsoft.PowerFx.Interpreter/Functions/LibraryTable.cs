@@ -539,10 +539,20 @@ namespace Microsoft.PowerFx.Functions
         {
             var values = new Dictionary<TDotNetPrimitive, DValue<RecordValue>>();
             var name = ((TableType)irContext.ResultType).SingleColumnFieldName;
+            var type = ((TableType)irContext.ResultType).SingleColumnFieldType;
+
+            // Have to handle null
+            var addBlankValue = false;
 
             foreach (var (row, sortValue) in pairs)
             {
-                var key = (TDotNetPrimitive)sortValue.ToObject();
+                if (sortValue?.ToObject() == null)
+                {
+                    addBlankValue = true;
+                    continue;
+                }
+
+                var key = (TDotNetPrimitive)sortValue?.ToObject();
   
                 if (!values.ContainsKey(key))
                 {
@@ -551,7 +561,14 @@ namespace Microsoft.PowerFx.Functions
                 }
             }
 
-            return new InMemoryTableValue(irContext, values.Values);
+            var append = Enumerable.Empty<DValue<RecordValue>>();
+            if (addBlankValue)
+            {
+                var emptyRecord = DValue<RecordValue>.Of(FormulaValue.NewRecordFromFields(new NamedValue(name, FormulaValue.NewBlank(type))));
+                append = new List<DValue<RecordValue>> { emptyRecord };
+            }
+
+            return new InMemoryTableValue(irContext, values.Values.Concat(append));
         }
 
         private static FormulaValue SortValueType<TPFxPrimitive, TDotNetPrimitive>(List<(DValue<RecordValue> row, FormulaValue sortValue)> pairs, IRContext irContext, int compareToResultModifier)
